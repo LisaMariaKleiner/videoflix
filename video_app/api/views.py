@@ -38,7 +38,6 @@ class VideoHLSPlaylistView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Construct path to HLS manifest
         m3u8_path = os.path.join(
             settings.MEDIA_ROOT,
             'hls',
@@ -62,7 +61,6 @@ class VideoHLSPlaylistView(APIView):
             with open(m3u8_path, 'r') as f:
                 content = f.read()
 
-            # Rewrite segment URLs to use API endpoint
             lines = content.splitlines()
             new_lines = []
             base_url = request.build_absolute_uri(
@@ -93,7 +91,6 @@ class VideoSegmentView(APIView):
         if resolution not in HLS_RESOLUTIONS:
             return Response({"detail": "Resolution not found."}, status=404)
 
-        # Security check: prevent directory traversal
         if "/" in segment or ".." in segment:
             return Response({"detail": "Invalid segment name"}, status=404)
 
@@ -105,7 +102,6 @@ class VideoSegmentView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Construct path to segment file
         segment_path = os.path.join(
             settings.MEDIA_ROOT,
             'hls',
@@ -114,7 +110,6 @@ class VideoSegmentView(APIView):
             segment
         )
 
-        # Security check: prevent directory traversal
         real_path = os.path.realpath(segment_path)
         media_hls_path = os.path.realpath(
             os.path.join(settings.MEDIA_ROOT, 'hls', str(movie_id), resolution)

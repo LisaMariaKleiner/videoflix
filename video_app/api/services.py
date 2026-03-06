@@ -56,9 +56,7 @@ def generate_thumbnail_for_video(video_id: int):
         
         print(f"[THUMBNAIL] Generated thumbnail for video {video.id}: {thumbnail_path}")
         
-        # Save thumbnail path to database WITHOUT triggering save signal
         if os.path.exists(thumbnail_path):
-            # Update directly using queryset to avoid post_save signal recursion
             thumbnail_relative_path = f'thumbnails/thumb_{video.id}.jpg'
             Video.objects.filter(pk=video.id).update(thumbnail=thumbnail_relative_path)
             print(f"[THUMBNAIL] Thumbnail saved to database for video {video.id}")

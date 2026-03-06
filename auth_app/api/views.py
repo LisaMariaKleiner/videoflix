@@ -72,7 +72,6 @@ class ActivateView(APIView):
         user.is_active = True
         user.save()
 
-        # Redirect to frontend login page
         return HttpResponseRedirect(f"{settings.FRONTEND_BASE_URL}/project.Videoflix/pages/auth/login.html")
 
 
@@ -89,7 +88,6 @@ class LoginView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Authenticate using email
         user = authenticate(request, username=email, password=password)
 
         if user is None:
@@ -104,7 +102,6 @@ class LoginView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # Generate tokens
         refresh = RefreshToken.for_user(user)
         
         response = Response(
@@ -118,22 +115,21 @@ class LoginView(APIView):
             status=status.HTTP_200_OK
         )
         
-        # Set HTTP-Only Cookies
         response.set_cookie(
             key='access_token',
             value=str(refresh.access_token),
             httponly=True,
-            secure=settings.DEBUG == False,  # HTTPS in production
+            secure=settings.DEBUG == False,
             samesite='Lax',
-            max_age=15 * 60,  # 15 minutes
+            max_age=15 * 60,
         )
         response.set_cookie(
             key='refresh_token',
             value=str(refresh),
             httponly=True,
-            secure=settings.DEBUG == False,  # HTTPS in production
+            secure=settings.DEBUG == False,
             samesite='Lax',
-            max_age=7 * 24 * 60 * 60,  # 7 days
+            max_age=7 * 24 * 60 * 60,
         )
         
         return response
@@ -167,7 +163,6 @@ class LogoutView(APIView):
             status=status.HTTP_200_OK
         )
 
-        # Delete cookies
         response.delete_cookie('access_token', samesite='Lax')
         response.delete_cookie('refresh_token', samesite='Lax')
 
@@ -203,14 +198,13 @@ class TokenRefreshView(APIView):
             status=status.HTTP_200_OK
         )
 
-        # Set new access_token cookie
         response.set_cookie(
             key='access_token',
             value=access_token,
             httponly=True,
             secure=settings.DEBUG == False,
             samesite='Lax',
-            max_age=15 * 60,  # 15 minutes
+            max_age=15 * 60,
         )
 
         return response
@@ -231,17 +225,14 @@ class PasswordResetView(APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            # For security: don't reveal if email exists
             return Response(
                 {'detail': 'An email has been sent to reset your password.'},
                 status=status.HTTP_200_OK
             )
 
-        # Generate token and encode user ID
         token = generate_activation_token(user)
         uidb64 = encode_user_id(user.id)
 
-        # Queue password reset email
         queue_password_reset_email(user.id, token, uidb64)
 
         return Response(

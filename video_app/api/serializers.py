@@ -13,7 +13,6 @@ class VideoListSerializer(serializers.ModelSerializer):
         """
         Generates the full thumbnail URL. Returns a placeholder if no thumbnail is uploaded.
         """
-        # Placeholder/Default image URL
         PLACEHOLDER_IMAGE = 'https://via.placeholder.com/300x200?text=No+Thumbnail'
         
         request = self.context.get('request')
@@ -23,5 +22,4 @@ class VideoListSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(url)
             return url
         
-        # Return placeholder if no thumbnail
         return PLACEHOLDER_IMAGE

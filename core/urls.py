@@ -25,6 +25,5 @@ urlpatterns = [
     path('api/video/', include('video_app.api.urls')),
 ]
 
-# Serve media files in development and production
-if settings.DEBUG or True:  # Always serve media files
+if settings.DEBUG or True:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

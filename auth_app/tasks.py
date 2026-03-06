@@ -13,7 +13,6 @@ def queue_activation_email(user_id):
             job_timeout='10m'
         )
     else:
-        # Fallback: Send synchronously in development
         send_activation_email_task(user_id)
 
 
@@ -30,7 +29,6 @@ def queue_password_reset_email(user_id, token, uidb64):
             job_timeout='10m'
         )
     else:
-        # Fallback: Send synchronously in development
         send_password_reset_email_task(user_id, token, uidb64)
 
 
