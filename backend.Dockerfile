@@ -15,9 +15,10 @@ RUN apk update && \
     apk add --no-cache --virtual .build-deps gcc musl-dev postgresql-dev linux-headers && \
     pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
-    apk del .build-deps && \
-    chmod +x backend.entrypoint.sh
+    apk del .build-deps
+
+RUN sed -i 's/\r$//' backend.entrypoint.sh && chmod +x backend.entrypoint.sh
 
 EXPOSE 8000
 
-ENTRYPOINT [ "./backend.entrypoint.sh" ]
+ENTRYPOINT [ "bash", "./backend.entrypoint.sh" ]

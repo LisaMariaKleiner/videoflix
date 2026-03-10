@@ -1,3 +1,4 @@
+﻿#!/bin/bash
 set -e
 
 echo "Warte auf PostgreSQL auf $DB_HOST:$DB_PORT..."
