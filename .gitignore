@@ -84,7 +84,7 @@ dump.rdb
 *.backup
 
 # Sensitive data
-.env*
+.env
 secrets/
 private_keys/
 
