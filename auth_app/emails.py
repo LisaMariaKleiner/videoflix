@@ -47,16 +47,14 @@ def send_activation_email(user):
 def send_password_reset_email(user, token, uidb64):
     """Send password reset email to user."""
     reset_link = (
-        f"{settings.FRONTEND_BASE_URL}/auth/reset-password/"
-        f"{uidb64}/{token}/"
+        f"{settings.FRONTEND_BASE_URL}/pages/auth/confirm_password.html"
+        f"?uid={uidb64}&token={token}"
     )
-
     context = {
         'user': user,
         'reset_link': reset_link,
         'frontend_base_url': settings.FRONTEND_BASE_URL,
     }
-
     subject = 'Setze dein Videoflix Passwort zurück'
     text_content = (
         f'Hallo {user.email},\n\n'
@@ -70,7 +68,6 @@ def send_password_reset_email(user, token, uidb64):
         'emails/password_reset_email.html',
         context
     )
-
     msg = EmailMultiAlternatives(
         subject=subject,
         body=text_content,

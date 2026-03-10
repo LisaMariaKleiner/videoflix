@@ -9,7 +9,16 @@ from django.conf import settings
 
 from video_app.models import Video
 from video_app.api.serializers import VideoListSerializer
-from .services import HLS_RESOLUTIONS
+from .services import (
+    HLS_RESOLUTIONS,
+    is_valid_resolution,
+    get_video_by_id,
+    build_m3u8_path,
+    read_and_rewrite_m3u8,
+    is_valid_segment_name,
+    build_segment_path,
+    validate_segment_path,
+)
 
 
 class VideoListView(APIView):
@@ -27,53 +36,42 @@ class VideoHLSPlaylistView(APIView):
 
     def get(self, request, movie_id, resolution):
         """Return HLS master playlist for a specific movie and resolution."""
-        if resolution not in HLS_RESOLUTIONS:
-            return Response({'detail': 'Resolution not found'}, status=404)
-
-        try:
-            video = Video.objects.get(id=movie_id)
-        except Video.DoesNotExist:
+        if not is_valid_resolution(resolution):
+            return Response(
+                {'detail': 'Resolution not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        video = get_video_by_id(movie_id)
+        if video is None:
             return Response(
                 {'detail': 'Video not found.'},
                 status=status.HTTP_404_NOT_FOUND
             )
-
-        m3u8_path = os.path.join(
-            settings.MEDIA_ROOT,
-            'hls',
-            str(movie_id),
-            resolution,
-            'index.m3u8'
-        )
-
+        
+        m3u8_path = build_m3u8_path(movie_id, resolution)
+        
         if not os.path.exists(m3u8_path):
             if not video.video_file:
                 return Response(
                     {"detail": "No video file for this movie"},
-                    status=404,
+                    status=status.HTTP_404_NOT_FOUND,
                 )
             return Response(
                 {"detail": "HLS stream is still being generated."},
-                status=503,
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
-
+        
         try:
-            with open(m3u8_path, 'r') as f:
-                content = f.read()
-
-            lines = content.splitlines()
-            new_lines = []
             base_url = request.build_absolute_uri(
-                f"/api/video/{video.id}/{resolution}/")
-
-            for line in lines:
-                if line.startswith('#') or not line.strip():
-                    new_lines.append(line)
-                else:
-                    new_lines.append(base_url + line.strip())
-            rewritten_content = '\n'.join(new_lines) + '\n'
-
-            response = HttpResponse(rewritten_content, content_type='application/vnd.apple.mpegurl')
+                f"/api/video/{video.id}/{resolution}/"
+            )
+            content = read_and_rewrite_m3u8(m3u8_path, base_url)
+            
+            response = HttpResponse(
+                content,
+                content_type='application/vnd.apple.mpegurl'
+            )
             response['Content-Disposition'] = 'inline'
             return response
         except IOError:
@@ -88,34 +86,28 @@ class VideoSegmentView(APIView):
 
     def get(self, request, movie_id, resolution, segment):
         """Return HLS video segment for a specific movie and resolution."""
-        if resolution not in HLS_RESOLUTIONS:
-            return Response({"detail": "Resolution not found."}, status=404)
+        if not is_valid_resolution(resolution):
+            return Response(
+                {"detail": "Resolution not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
-        if "/" in segment or ".." in segment:
-            return Response({"detail": "Invalid segment name"}, status=404)
+        if not is_valid_segment_name(segment):
+            return Response(
+                {"detail": "Invalid segment name"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        try:
-            video = Video.objects.get(id=movie_id)
-        except Video.DoesNotExist:
+        video = get_video_by_id(movie_id)
+        if video is None:
             return Response(
                 {'detail': 'Video not found.'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        segment_path = os.path.join(
-            settings.MEDIA_ROOT,
-            'hls',
-            str(movie_id),
-            resolution,
-            segment
-        )
+        segment_path = build_segment_path(movie_id, resolution, segment)
 
-        real_path = os.path.realpath(segment_path)
-        media_hls_path = os.path.realpath(
-            os.path.join(settings.MEDIA_ROOT, 'hls', str(movie_id), resolution)
-        )
-
-        if not real_path.startswith(media_hls_path):
+        if not validate_segment_path(segment_path, movie_id, resolution):
             return Response(
                 {'error': 'Invalid segment path.'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -128,7 +120,10 @@ class VideoSegmentView(APIView):
             )
 
         try:
-            response = FileResponse(open(segment_path, 'rb'), content_type='video/MP2T')
+            response = FileResponse(
+                open(segment_path, 'rb'),
+                content_type='video/MP2T'
+            )
             response['Content-Disposition'] = 'inline'
             return response
         except IOError:

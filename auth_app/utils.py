@@ -36,3 +36,42 @@ def generate_activation_token(user):
 def verify_activation_token(user, token):
     """Verify activation token for user."""
     return activation_token_generator.check_token(user, token)
+
+
+def get_user_by_id_and_verify_token(user_id, token):
+    """
+    Retrieve user by ID and verify token. 
+    Returns user if valid, None otherwise.
+    """
+    if user_id is None:
+        return None
+    
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return None
+    
+    if not verify_activation_token(user, token):
+        return None
+    
+    return user
+
+
+def validate_password_match(password1, password2):
+    """
+    Validate that two passwords match.
+    Returns tuple (is_valid, error_message).
+    """
+    if not password1 or not password2:
+        return False, "Both password fields are required."
+    
+    if password1 != password2:
+        return False, "Passwords do not match."
+    
+    return True, None
+
+
+def reset_user_password(user, new_password):
+    """Set and save new password for user."""
+    user.set_password(new_password)
+    user.save()

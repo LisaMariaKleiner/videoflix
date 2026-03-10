@@ -3,7 +3,12 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-
+"""
+Serializer to handle user registration. 
+It includes validation to ensure that the password and confirmed password match, 
+and that the email is unique. The create method is overridden to create a new user 
+with the provided email and password, and to set the user as inactive until they confirm their email address.
+"""
 class RegistrationSerializer(serializers.ModelSerializer):
     confirmed_password = serializers.CharField(
         write_only=True,

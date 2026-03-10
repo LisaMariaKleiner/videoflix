@@ -1,6 +1,10 @@
 from django.db import models
 
-
+"""
+This module defines the Video model, which represents a video uploaded to the platform.
+The Video model includes fields for title, description, category, thumbnail image, video file, and
+timestamps for creation and updates. It also defines the available categories for videos.
+The Video model is used to store and manage video content within the application."""
 class Video(models.Model):
     CATEGORY_CHOICES = [
         ('Drama', 'Drama'),
