@@ -104,7 +104,7 @@ Die API ist nun verfügbar unter:
 
 ### `.env` Datei erstellen
 
-Erstelle eine `.env`-Datei im Projekt-Root mit den Variablen aus der .env.template:
+Erstelle eine `.env`-Datei im Projekt-Root mit den Variablen aus der .env.example:
 
 ### 📧 Ethereal Email für Testzwecke
 
